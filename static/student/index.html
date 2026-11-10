@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LANQ — Join the quiz</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="student-page">
+  <header class="masthead" style="width: 100%">
+    <div class="masthead-inner" style="max-width: 36rem">
+      <div class="wordmark">
+        <h1 class="wordmark-name">LANQ</h1>
+        <span class="wordmark-sub">Classroom quiz</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" class="student-main">
+    <div id="state-message" class="state-message" role="status">No active quiz. Your teacher hasn't started yet.</div>
+
+    <section id="join-view" hidden>
+      <h2 style="font-family: var(--font-serif); font-weight: 500; font-style: italic; font-size: 1.35rem; margin-bottom: 1.25rem">Join the quiz</h2>
+      <form id="join-form">
+        <label>Student ID
+          <input name="student_id" autocomplete="off" required>
+        </label>
+        <label>Name
+          <input name="name" autocomplete="name" required>
+        </label>
+        <div><button type="submit" class="primary">Join</button></div>
+      </form>
+      <p id="join-error" class="field-error" role="alert" hidden></p>
+    </section>
+
+    <section id="quiz-view" hidden>
+      <h2 id="quiz-title" style="font-family: var(--font-serif); font-weight: 500; font-size: 1.45rem; margin-bottom: 0.25rem"></h2>
+      <p id="quiz-timer" class="quiz-timer" hidden>
+        <span>Time remaining</span>
+        <strong id="quiz-timer-value"></strong>
+      </p>
+      <ol id="quiz-questions" class="question-list"></ol>
+      <button id="submit-quiz" type="button" class="primary">Submit answers</button>
+    </section>
+  </main>
+  <script src="/static/js/student.js"></script>
+</body>
+</html>

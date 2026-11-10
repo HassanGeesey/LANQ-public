@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LANQ — Classroom Quiz Console</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="wordmark">
+        <h1 class="wordmark-name">LANQ</h1>
+        <span class="wordmark-sub">Classroom Quiz Console</span>
+      </div>
+      <p class="masthead-user" id="masthead-user" hidden>
+        Signed in as <strong id="whoami"></strong>
+      </p>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="setup-view" class="auth-block" hidden>
+      <h2>First-run setup</h2>
+      <p class="auth-note">Create the teacher account for this machine. This can only be done once.</p>
+      <form id="setup-form">
+        <label>Username <input name="username" autocomplete="username" required></label>
+        <label>Password <input name="password" type="password" autocomplete="new-password" required></label>
+        <div><button type="submit" class="primary">Create account</button></div>
+      </form>
+    </section>
+
+    <section id="login-view" class="auth-block" hidden>
+      <h2>Teacher login</h2>
+      <form id="login-form">
+        <label>Username <input name="username" autocomplete="username" required></label>
+        <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+        <div><button type="submit" class="primary">Log in</button></div>
+      </form>
+    </section>
+
+    <section id="dashboard-view" hidden>
+      <nav id="tab-bar" aria-label="Sections">
+        <button type="button" class="tab" data-tab="dashboard">Dashboard</button>
+        <button type="button" class="tab" data-tab="library">Quiz library</button>
+        <button type="button" class="tab" data-tab="session">Live session</button>
+        <button type="button" class="tab" data-tab="history">History</button>
+        <button type="button" class="tab" data-tab="account">Account</button>
+      </nav>
+
+      <section id="dashboard-tab" hidden>
+        <div class="section-head dashboard-header">
+          <div>
+            <h2 id="dashboard-title">Classroom dashboard</h2>
+            <p id="dashboard-meta" class="muted" hidden></p>
+          </div>
+          <span id="dashboard-live-status" class="session-status dashboard-live-status" hidden>Session live · updating</span>
+        </div>
+        <div id="dashboard-empty" class="dashboard-empty" hidden>
+          <h3>No active session</h3>
+          <p>Start a quiz session to see participation, answers, and results here.</p>
+          <button type="button" id="dashboard-open-session" class="primary">Open live session</button>
+        </div>
+
+        <div id="live-results" hidden>
+          <div class="dashboard-metrics" aria-label="Session summary">
+            <div class="dashboard-metric"><span>Students joined</span><strong id="metric-participants">0</strong></div>
+            <div class="dashboard-metric"><span>Submitted</span><strong id="metric-submitted">0</strong></div>
+            <div class="dashboard-metric"><span>In progress</span><strong id="metric-in-progress">0</strong></div>
+            <div class="dashboard-metric"><span>Average score</span><strong id="metric-average-score">—</strong></div>
+          </div>
+
+          <div class="dashboard-charts">
+            <section class="dashboard-panel outcomes-panel" aria-labelledby="outcomes-title">
+              <div class="dashboard-panel-heading">
+                <h3 id="outcomes-title">Answer outcomes</h3>
+                <p id="outcomes-total" class="muted">0 responses</p>
+              </div>
+              <div class="outcomes-content">
+                <div id="outcomes-chart" class="outcomes-chart" role="img" aria-label="No answers submitted">
+                  <span id="outcomes-chart-total">0</span>
+                </div>
+                <ul class="outcomes-legend" aria-label="Answer outcome counts">
+                  <li><span class="outcome-swatch outcome-correct"></span><span>Correct</span><strong id="outcomes-correct">0</strong></li>
+                  <li><span class="outcome-swatch outcome-incorrect"></span><span>Incorrect</span><strong id="outcomes-incorrect">0</strong></li>
+                  <li><span class="outcome-swatch outcome-unanswered"></span><span>Unanswered</span><strong id="outcomes-unanswered">0</strong></li>
+                </ul>
+              </div>
+            </section>
+
+            <figure class="figure dashboard-panel" id="accuracy-figure">
+              <div class="figure-label-row">
+                <h3 class="figure-title" id="accuracy-figure-title">Accuracy by question</h3>
+              </div>
+              <p id="accuracy-empty" class="muted" hidden>No questions to chart yet.</p>
+              <ul id="accuracy-chart" class="accuracy-chart" hidden></ul>
+              <figcaption class="figure-caption">Share of answered submissions that chose the correct option.</figcaption>
+            </figure>
+          </div>
+
+          <section class="dashboard-section">
+            <div class="dashboard-section-heading">
+              <h3>Leaderboard</h3>
+              <p class="muted">Submitted quizzes ranked by score</p>
+            </div>
+            <p id="leaderboard-empty" class="muted" hidden>No submissions yet.</p>
+            <table id="leaderboard-table" class="results-table" hidden>
+              <caption>Submissions, ranked by score.</caption>
+              <thead><tr><th scope="col">Rank</th><th scope="col">Student ID</th><th scope="col">Name</th><th scope="col">Score</th><th scope="col">Submitted</th></tr></thead>
+              <tbody id="leaderboard-body"></tbody>
+            </table>
+          </section>
+
+          <section class="dashboard-section">
+            <div class="dashboard-section-heading">
+              <h3>Student roster</h3>
+              <p class="muted">Select a student for their answer record</p>
+            </div>
+            <p id="roster-empty" class="muted" hidden>No participants yet.</p>
+            <table id="roster-table" class="results-table" hidden>
+              <caption>Live roster. Select a row for the full answer record.</caption>
+              <thead><tr><th scope="col">Student ID</th><th scope="col">Name</th><th scope="col">Joined</th><th scope="col">Status</th><th scope="col">Score</th></tr></thead>
+              <tbody id="roster-body"></tbody>
+            </table>
+          </section>
+
+          <section id="drilldown" class="drilldown" hidden>
+            <div class="row-between">
+              <h3 id="drilldown-title"></h3>
+              <button type="button" id="drilldown-close-button">Close</button>
+            </div>
+            <p id="drilldown-meta" class="muted"></p>
+            <ol id="drilldown-questions" class="drilldown-questions"></ol>
+          </section>
+        </div>
+      </section>
+
+      <section id="library-tab">
+        <div id="library-view">
+          <div class="section-head">
+            <h2>Your quizzes</h2>
+            <button type="button" id="new-quiz-button" class="primary">New quiz</button>
+          </div>
+          <p id="quiz-list-empty" class="muted" hidden>No quizzes yet. Create one to run a live session.</p>
+          <ul id="quiz-list" class="quiz-list"></ul>
+        </div>
+
+        <div id="quiz-editor" hidden>
+          <h2 id="quiz-editor-heading">New quiz</h2>
+          <p id="editor-error-summary" class="error-summary" role="alert" hidden></p>
+          <form id="quiz-editor-form">
+            <label>Title
+              <input id="quiz-title" data-field="title" autocomplete="off">
+            </label>
+            <p class="field-error" data-error-for="title" hidden></p>
+
+            <label>Time limit in minutes (blank for no limit)
+              <input id="quiz-time-limit" data-field="time_limit_seconds" inputmode="numeric" autocomplete="off">
+            </label>
+            <p class="field-error" data-error-for="time_limit_seconds" hidden></p>
+
+            <ol id="question-list" class="question-list"></ol>
+            <div><button type="button" id="add-question-button">Add question</button></div>
+
+            <div class="row-between editor-actions">
+              <div>
+                <button type="button" id="preview-quiz-button">Preview</button>
+              </div>
+              <div>
+                <button type="submit" id="save-quiz-button" class="primary">Save quiz</button>
+                <button type="button" id="cancel-quiz-button">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="session-tab" hidden>
+        <div id="session-idle">
+          <h2>Live session</h2>
+          <p class="section-lede">
+            Pick a quiz and start a session. Students scan the QR code to join from
+            any device on the classroom network.
+          </p>
+          <div class="session-controls">
+            <label class="session-picker">Quiz
+              <select id="session-quiz-select"></select>
+            </label>
+            <button type="button" id="start-session-button" class="primary">Start session</button>
+          </div>
+          <p id="session-no-quizzes" class="muted" hidden>
+            Save a quiz in the library first.
+          </p>
+        </div>
+
+        <div id="session-live" hidden>
+          <div id="session-live-controls">
+            <div class="session-live-grid">
+              <div class="qr-plate">
+                <p class="qr-plate-label">Join code</p>
+                <button type="button" id="session-qr-open" class="qr-expand" aria-label="Open full-screen join QR code">
+                  <span id="session-qr" class="qr" aria-hidden="true"></span>
+                </button>
+                <p class="qr-open-hint">Select the QR code to enlarge it</p>
+                <p class="muted" style="margin: 0 0 0.4rem">Scan, or open</p>
+                <p style="margin: 0"><strong id="session-join-url" class="join-url"></strong></p>
+              </div>
+              <div>
+                <p class="session-status">Session live · accepting submissions</p>
+                <h3 id="session-live-title" class="session-live-title"></h3>
+                <div style="margin-top: 1.25rem">
+                  <button type="button" id="stop-session-button" class="danger">Stop session</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="history-tab" hidden>
+        <h2>Session history</h2>
+        <p class="section-lede">
+          Finished and running sessions stay here until you delete them. Open any
+          session to review the full dashboard, or export it as CSV.
+        </p>
+        <p id="history-empty" class="muted" hidden>No sessions yet.</p>
+        <table id="history-table" class="results-table" hidden>
+          <caption>Table 3 — Sessions on this machine.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Quiz</th>
+              <th scope="col">Started</th>
+              <th scope="col">Ended</th>
+              <th scope="col">Students</th>
+              <th scope="col">Status</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </section>
+
+      <section id="account-tab" hidden>
+        <h2>Account</h2>
+
+        <h3 style="margin-top: 1.75rem">Change password</h3>
+        <form id="change-password-form">
+          <label>Current password <input name="current_password" type="password" autocomplete="current-password" required></label>
+          <label>New password <input name="new_password" type="password" autocomplete="new-password" required></label>
+          <div><button type="submit">Change password</button></div>
+        </form>
+
+        <div style="margin-top: 2.25rem">
+          <button type="button" id="logout-button">Log out</button>
+        </div>
+      </section>
+    </section>
+
+    <p id="error-message" role="alert" hidden></p>
+  </main>
+  <dialog id="session-qr-dialog" class="session-qr-dialog" aria-labelledby="session-qr-title">
+    <div class="session-qr-dialog-head">
+      <h2 id="session-qr-title">Scan to join</h2>
+      <button type="button" id="session-qr-close" aria-label="Close enlarged QR code">Close</button>
+    </div>
+    <div class="session-qr-dialog-content">
+      <div id="session-qr-large" class="qr qr-large" aria-label="Session join QR code"></div>
+      <p class="session-qr-dialog-url" id="session-qr-dialog-url"></p>
+    </div>
+  </dialog>
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>

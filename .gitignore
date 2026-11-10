@@ -1,0 +1,9 @@
+lanq.db
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+build/
+dist/
+*.exe
+.venv/
